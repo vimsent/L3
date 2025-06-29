@@ -3,7 +3,7 @@ syntax = "proto3";
 package matchmaking;
 
 // Ruta usada por protoc-gen-go para generar código Go.
-option go_package = "github.com/your-org/your-repo/proto;proto";
+option go_package = "github.com/vimsent/L3/proto;proto";
 
 import "google/protobuf/timestamp.proto";
 
