@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/tu_usuario/tu_proyecto/proto" // ⬅️  ajusta esta ruta a tu módulo
+	pb "github.com/vimsent/L3/proto" // ⬅️  ajusta esta ruta a tu módulo
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

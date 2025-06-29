@@ -24,7 +24,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	// Cambia esta ruta al paquete que generó protoc.
-	"github.com/vimsent/L3/proto/matchmakingpb"
+	matchmakingpb "github.com/vimsent/L3/proto"
 )
 
 // Constantes de menú.

@@ -27,7 +27,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	pb "github.com/your-github-user/tu-repositorio/proto" // ← ajusta la ruta a tu módulo Go
+	pb "github.com/vimsent/L3/proto" // ← ajusta la ruta a tu módulo Go
 )
 
 /*───────────────────────────────────────────────────────────────────────────────

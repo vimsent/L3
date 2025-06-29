@@ -49,7 +49,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/yourrepo/proto/pb" // => generado con `go_package` = "github.com/yourrepo/proto;pb"
+	pb "github.com/vimsent/L3/proto" // => generado con `go_package` = "github.com/yourrepo/proto;pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
