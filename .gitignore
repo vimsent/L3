@@ -1,0 +1,10 @@
+# binarios y carpetas de compilación
+*.exe
+*.out
+*.test
+/dist
+# módulos descargados (si se usa vendor)
+vendor/
+# ficheros intercambiados por IDE
+.idea/
+.vscode/
