@@ -1,0 +1,136 @@
+# docker-compose.yml
+#
+# Diseñado para:
+#  1) Ejecutar todas las entidades del laboratorio en terminales/contendores separados, localmente.
+#  2) Facilitar la migración a distintas VMs cambiando únicamente variables de entorno
+#     o activando perfiles (vm1, vm2, vm3, vm4).
+#  3) Mantener nombres y puertos fijos dentro de la red Docker para que las entidades
+#     se descubran entre sí usando MATCHMAKER_ADDR=matchmaker:50051.
+
+version: "3.8"
+
+############################
+#  Variables globales
+############################
+x-common: &common
+  restart: unless-stopped
+  networks:
+    - sd-net
+  # Añadimos un pequeño delay para que los logs queden coloreados
+  environment:
+    - LOG_LEVEL=info
+
+############################
+#  Servicios (entidades)
+############################
+services:
+  ##########################
+  #  Matchmaker (único)
+  ##########################
+  matchmaker:
+    <<: *common
+    container_name: matchmaker
+    build:
+      context: ./matchmaker
+    ports:
+      - "50051:50051"       # Exponemos para pruebas locales con grpcurl, etc.
+    environment:
+      - GRPC_PORT=50051     # Puerto interno en el que escucha gRPC
+      - NODE_ID=matchmaker
+    profiles: ["vm4","full"]  # vm4 = distribución ejemplo del enunciado
+
+  ##########################
+  #  Game Servers (3)
+  ##########################
+  gameserver1:
+    <<: *common
+    container_name: gameserver1
+    build: ./gameserver
+    depends_on:
+      - matchmaker
+    ports:
+      - "60051:60051"
+    environment:
+      - MATCHMAKER_ADDR=matchmaker:50051
+      - SERVER_ID=gameserver1
+      - GRPC_PORT=60051
+    profiles: ["vm1","full"]
+
+  gameserver2:
+    <<: *common
+    container_name: gameserver2
+    build: ./gameserver
+    depends_on:
+      - matchmaker
+    ports:
+      - "60052:60051"       # Exponemos en otro puerto del host, pero internamente 60051
+    environment:
+      - MATCHMAKER_ADDR=matchmaker:50051
+      - SERVER_ID=gameserver2
+      - GRPC_PORT=60051
+    profiles: ["vm2","full"]
+
+  gameserver3:
+    <<: *common
+    container_name: gameserver3
+    build: ./gameserver
+    depends_on:
+      - matchmaker
+    ports:
+      - "60053:60051"
+    environment:
+      - MATCHMAKER_ADDR=matchmaker:50051
+      - SERVER_ID=gameserver3
+      - GRPC_PORT=60051
+    profiles: ["vm3","full"]
+
+  ##########################
+  #  Players (2)
+  ##########################
+  player1:
+    <<: *common
+    container_name: player1
+    build: ./player
+    depends_on:
+      - matchmaker
+    environment:
+      - MATCHMAKER_ADDR=matchmaker:50051
+      - PLAYER_ID=player1
+    tty: true          # Para poder interactuar con el menú en consola
+    stdin_open: true
+    profiles: ["vm1","full"]
+
+  player2:
+    <<: *common
+    container_name: player2
+    build: ./player
+    depends_on:
+      - matchmaker
+    environment:
+      - MATCHMAKER_ADDR=matchmaker:50051
+      - PLAYER_ID=player2
+    tty: true
+    stdin_open: true
+    profiles: ["vm2","full"]
+
+  ##########################
+  #  Admin Client (único)
+  ##########################
+  adminclient:
+    <<: *common
+    container_name: adminclient
+    build: ./adminclient
+    depends_on:
+      - matchmaker
+    environment:
+      - MATCHMAKER_ADDR=matchmaker:50051
+    tty: true
+    stdin_open: true
+    profiles: ["vm4","full"]
+
+############################
+#  Red interna
+############################
+networks:
+  sd-net:
+    driver: bridge

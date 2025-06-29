@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+package matchmaking;
+
+// Ruta usada por protoc-gen-go para generar código Go.
+option go_package = "github.com/your-org/your-repo/proto;proto";
+
+import "google/protobuf/timestamp.proto";
+
+// ─────────────── ENUMS ───────────────
+enum PlayerState {
+  PLAYER_STATE_IDLE      = 0;
+  PLAYER_STATE_IN_QUEUE  = 1;
+  PLAYER_STATE_IN_MATCH  = 2;
+}
+
+enum ServerState {
+  SERVER_STATE_UNKNOWN    = 0;
+  SERVER_STATE_AVAILABLE  = 1;
+  SERVER_STATE_BUSY       = 2;
+  SERVER_STATE_DOWN       = 3;
+}
+
+// ──────────── UTILIDADES ─────────────
+message VectorClock {
+  // Cada posición corresponde a la “vista” causal de una entidad.
+  repeated uint32 entries = 1;
+}
+
+// ─────────── MENSAJES JUGADOR ─────────
+message PlayerInfoRequest {
+  string       player_id  = 1;
+  string       game_mode  = 2;   // e.g. "1v1"
+  VectorClock  clock      = 3;
+}
+
+message QueuePlayerResponse {
+  bool         success = 1;
+  string       message = 2;
+  VectorClock  clock   = 3;
+}
+
+message PlayerStatusRequest {
+  string       player_id = 1;
+  VectorClock  clock     = 2;
+}
+
+message PlayerStatusResponse {
+  PlayerState  state        = 1;
+  string       match_id     = 2;
+  string       server_addr  = 3;
+  VectorClock  clock        = 4;
+}
+
+// ───────────── MENSAJES SERVER ────────
+message AssignMatchRequest {
+  string       match_id    = 1;
+  repeated string player_ids = 2;
+  VectorClock  clock       = 3;
+}
+
+message AssignMatchResponse {
+  bool         success = 1;
+  string       message = 2;
+  VectorClock  clock   = 3;
+}
+
+message ServerStatusUpdateRequest {
+  string       server_id  = 1;
+  ServerState  new_state  = 2;
+  string       address    = 3;  // host:port de GameServer
+  VectorClock  clock      = 4;
+}
+
+message ServerStatusUpdateResponse {
+  bool         success = 1;
+  string       message = 2;
+  VectorClock  clock   = 3;
+}
+
+message PingRequest {
+  string server_id = 1;
+}
+
+message PingResponse {
+  bool  alive = 1;
+}
+
+// ──────────── MENSAJES ADMIN ──────────
+message AdminRequest {}  // vacío
+
+message ServerInfo {
+  string       server_id        = 1;
+  ServerState  state            = 2;
+  string       address          = 3;
+  string       current_match_id = 4;
+}
+
+message PlayerQueueEntry {
+  string                          player_id   = 1;
+  google.protobuf.Timestamp       queued_since = 2;
+}
+
+message SystemStatusResponse {
+  repeated ServerInfo        servers  = 1;
+  repeated PlayerQueueEntry  players  = 2;
+  VectorClock                clock    = 3;
+}
+
+message AdminServerUpdateRequest {
+  string       server_id    = 1;
+  ServerState  forced_state = 2;
+  VectorClock  clock        = 3;
+}
+
+message AdminUpdateResponse {
+  bool         success = 1;
+  string       message = 2;
+  VectorClock  clock   = 3;
+}
+
+// ────────────── SERVICIOS ─────────────
+service MatchmakerService {
+  // API para Jugadores
+  rpc QueuePlayer      (PlayerInfoRequest)        returns (QueuePlayerResponse);
+  rpc GetPlayerStatus  (PlayerStatusRequest)      returns (PlayerStatusResponse);
+
+  // API para Cliente Administrador
+  rpc AdminGetSystemStatus   (AdminRequest)             returns (SystemStatusResponse);
+  rpc AdminUpdateServerState (AdminServerUpdateRequest) returns (AdminUpdateResponse);
+}
+
+service GameServerService {
+  // Invocado por el Matchmaker
+  rpc AssignMatch        (AssignMatchRequest)        returns (AssignMatchResponse);
+
+  // Invocado por el GameServer hacia el Matchmaker
+  rpc UpdateServerStatus (ServerStatusUpdateRequest) returns (ServerStatusUpdateResponse);
+
+  // Health-check opcional
+  rpc PingServer         (PingRequest)               returns (PingResponse);
+}

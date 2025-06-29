@@ -1,0 +1,19 @@
+.
+├── proto
+│   └── matchmaking.proto
+├── player
+│   ├── main.go
+│   └── Dockerfile
+├── gameserver
+│   ├── main.go
+│   └── Dockerfile
+├── matchmaker
+│   ├── main.go
+│   └── Dockerfile
+├── adminclient
+│   ├── main.go
+│   └── Dockerfile
+├── Makefile
+├── docker-compose.yml
+└── README.md
+
