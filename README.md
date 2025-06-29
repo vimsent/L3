@@ -9,8 +9,8 @@ Laboratorio 3 · Sistemas Distribuidos · UTFSM · 2025-1
 ## 1 · Clonar el repositorio
 
 ```bash
-git clone https://github.com/<tu-usuario>/<repo-lab3>.git
-cd <repo-lab3>
+git clone git@github.com:vimsent/L3.git
+cd L3
 ```
 ---
 
