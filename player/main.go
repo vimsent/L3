@@ -20,6 +20,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vimsent/L3/internal/clocks"
+	slog "github.com/vimsent/L3/internal/log"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -35,6 +38,8 @@ const (
 	defaultGameMode = "1v1"
 )
 
+var localClock *clocks.Vector
+
 func main() {
 	// ──────────────────────────────────────────────────────────────────────────────
 	// 1. Configuración inicial ─ ID de jugador y dirección del Matchmaker
@@ -45,6 +50,10 @@ func main() {
 		rand.Seed(time.Now().UnixNano())
 		playerID = fmt.Sprintf("Player%d", rand.Intn(10000))
 	}
+	go func() {
+		localClock = clocks.New(playerID)
+		slog.Info("Clock inicial %s", localClock.String())
+	}()
 
 	matchmakerAddr := os.Getenv("MATCHMAKER_ADDR")
 	if matchmakerAddr == "" {
@@ -88,6 +97,7 @@ func main() {
 		switch choice {
 		case menuJoinQueue:
 			if err := queuePlayer(ctx, client, playerID); err != nil {
+
 				log.Printf("[Player %s] Error al unirse a la cola: %v\n", playerID, err)
 			}
 		case menuGetStatus:
@@ -109,16 +119,22 @@ func main() {
 
 // queuePlayer realiza llamada RPC QueuePlayer.
 func queuePlayer(ctx context.Context, client matchmakingpb.MatchmakerClient, playerID string) error {
+
 	req := &matchmakingpb.PlayerInfoRequest{
 		PlayerId: playerID,
 		GameMode: defaultGameMode,
 	}
+	go func() {
+		localClock.Tick(playerID)
+	}()
+	req.Clock = clocksToProto(localClock)
 
 	start := time.Now()
 	res, err := client.QueuePlayer(ctx, req)
 	if err != nil {
 		return err
 	}
+	localClock.Merge(protoToClocks(res.GetClock()))
 
 	log.Printf("[Player %s] QueuePlayer ➜ status=%s • msg=%q • t=%s\n",
 		playerID, res.GetStatus(), res.GetMessage(), time.Since(start))
@@ -132,10 +148,14 @@ func getPlayerStatus(ctx context.Context, client matchmakingpb.MatchmakerClient,
 	}
 
 	start := time.Now()
+	localClock.Tick(playerID)
+	req.Clock = clocksToProto(localClock)
+
 	res, err := client.GetPlayerStatus(ctx, req)
 	if err != nil {
 		return err
 	}
+	localClock.Merge(protoToClocks(res.GetClock()))
 
 	// Formateamos salida legible.
 	state := res.GetState()
