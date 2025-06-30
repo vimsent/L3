@@ -31,7 +31,8 @@ services:
     <<: *common
     container_name: matchmaker
     build:
-      context: ./matchmaker
+      context: .                # ← raíz
+      dockerfile: matchmaker/Dockerfile
     ports:
       - "50051:50051"       # Exponemos para pruebas locales con grpcurl, etc.
     environment:
@@ -45,7 +46,9 @@ services:
   gameserver1:
     <<: *common
     container_name: gameserver1
-    build: ./gameserver
+    build:
+      context: .                # ← raíz
+      dockerfile: gameserver/Dockerfile
     depends_on:
       - matchmaker
     ports:
@@ -59,7 +62,9 @@ services:
   gameserver2:
     <<: *common
     container_name: gameserver2
-    build: ./gameserver
+    build:
+      context: .                # ← raíz
+      dockerfile: gameserver/Dockerfile
     depends_on:
       - matchmaker
     ports:
@@ -73,7 +78,9 @@ services:
   gameserver3:
     <<: *common
     container_name: gameserver3
-    build: ./gameserver
+    build:
+      context: .                # ← raíz
+      dockerfile: gameserver/Dockerfile
     depends_on:
       - matchmaker
     ports:
@@ -90,7 +97,9 @@ services:
   player1:
     <<: *common
     container_name: player1
-    build: ./player
+    build:
+      context: .
+      dockerfile: player/Dockerfile
     depends_on:
       - matchmaker
     environment:
@@ -103,7 +112,9 @@ services:
   player2:
     <<: *common
     container_name: player2
-    build: ./player
+    build:
+      context: .
+      dockerfile: player/Dockerfile
     depends_on:
       - matchmaker
     environment:
@@ -119,7 +130,9 @@ services:
   adminclient:
     <<: *common
     container_name: adminclient
-    build: ./adminclient
+    build:
+      context: .
+      dockerfile: adminclient/Dockerfile
     depends_on:
       - matchmaker
     environment:
